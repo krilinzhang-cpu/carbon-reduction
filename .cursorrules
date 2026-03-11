@@ -1,0 +1,281 @@
+# Carbon Reduction Platform — Cursor Rules
+# 企业碳减排与节能技术平台 — 开发规范文件
+# 适用范围：所有前端页面、后端接口、数据库设计
+
+---
+
+## 一、项目定位
+
+本项目是面向**企业内部碳管理人员**的 B 端 SaaS 平台，核心功能：
+1. 按行业查询节能减排技术库
+2. 根据企业工艺路径描述生成个性化减排路径规划
+
+---
+
+## 二、技术选型建议（暂未确定时参照此项）
+
+### 前端（推荐）
+- **框架**：Next.js 14（App Router）+ TypeScript
+- **UI 组件库**：Ant Design 5.x 或 Shadcn/ui
+- **样式**：Tailwind CSS
+- **状态管理**：Zustand（轻量）或 React Query（服务端状态）
+- **图表**：ECharts 或 Recharts（减排路径时间轴、减排量可视化）
+
+### 后端（推荐）
+- **语言/框架**：Node.js + Express 或 Python + FastAPI
+- **AI 集成**：Anthropic Claude API（技术检索 + 路径规划生成）
+- **搜索**：集成 web_search 工具用于实时检索
+
+### 数据库（推荐）
+- **关系型**：PostgreSQL（主库，存储企业信息、查询记录、技术库）
+- **全文检索**：PostgreSQL 内置 `tsvector`，或额外部署 Elasticsearch
+- **缓存**：Redis（缓存高频行业技术查询结果）
+
+---
+
+## 三、网页风格规范（UI Style Guide）
+
+### 3.1 色彩系统
+
+```css
+/* 主色 - 蓝绿专业色调 */
+--color-primary:       #0D7A6B;   /* 主绿色，按钮、强调 */
+--color-primary-light: #E6F4F1;   /* 浅绿背景、Tag */
+--color-primary-dark:  #095C50;   /* Hover 态 */
+
+/* 辅助蓝 */
+--color-blue:          #1A6FA8;   /* 链接、次级强调 */
+--color-blue-light:    #E8F3FB;   /* 信息提示背景 */
+
+/* 中性色 */
+--color-bg:            #F7F8FA;   /* 页面背景 */
+--color-surface:       #FFFFFF;   /* 卡片/面板背景 */
+--color-border:        #E4E7ED;   /* 边框 */
+--color-text-primary:  #1D2129;   /* 主文字 */
+--color-text-secondary:#4E5969;   /* 次级文字 */
+--color-text-disabled: #A9AEB8;   /* 禁用/说明文字 */
+
+/* 状态色 */
+--color-success:       #00B42A;   /* 成熟商用技术 */
+--color-warning:       #FF7D00;   /* 示范推广技术 */
+--color-info:          #165DFF;   /* 研发阶段技术 */
+--color-error:         #F53F3F;   /* 错误提示 */
+```
+
+### 3.2 字体规范
+
+```css
+/* 字体栈 */
+font-family: 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+
+/* 字号层级 */
+--font-size-h1:   28px;   /* 页面大标题 */
+--font-size-h2:   22px;   /* 模块标题 */
+--font-size-h3:   18px;   /* 卡片标题 */
+--font-size-body: 14px;   /* 正文 */
+--font-size-sm:   12px;   /* 标签、说明文字 */
+
+/* 行高 */
+--line-height-tight:  1.4;
+--line-height-normal: 1.6;
+--line-height-loose:  1.8;
+```
+
+### 3.3 间距与布局
+
+```css
+/* 间距规范（8px 基础单位） */
+--space-xs:  4px;
+--space-sm:  8px;
+--space-md:  16px;
+--space-lg:  24px;
+--space-xl:  32px;
+--space-xxl: 48px;
+
+/* 圆角 */
+--radius-sm: 4px;    /* 标签、小按钮 */
+--radius-md: 8px;    /* 卡片、输入框 */
+--radius-lg: 12px;   /* 模态框、大面板 */
+
+/* 阴影 */
+--shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+--shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
+```
+
+### 3.4 组件设计规则
+
+- **卡片**：白底、`--shadow-card`、`--radius-md`，hover 时升级为 `--shadow-hover`
+- **按钮**：主操作用 `--color-primary`，次操作用描边按钮，禁止超过 3 种按钮样式并列
+- **表格**：斑马纹（奇数行 `#FFFFFF`，偶数行 `#F7F8FA`），表头固定，支持列筛选
+- **技术成熟度标签**：
+  - 成熟商用 → 绿色 Tag (`--color-success`)
+  - 示范推广 → 橙色 Tag (`--color-warning`)
+  - 研发阶段 → 蓝色 Tag (`--color-info`)
+- **导航**：左侧固定侧边栏（宽 220px），顶部 64px Header，内容区最大宽度 1280px
+- **空状态**：必须有图示 + 引导文案，不允许空白区域无提示
+- **加载状态**：骨架屏（Skeleton）优先，禁止全屏 Loading 遮罩（影响体验）
+
+---
+
+## 四、字段规范（Field Constraints）
+
+### 4.1 企业信息
+
+| 字段 | 类型 | 长度限制 | 必填 | 说明 |
+|------|------|---------|------|------|
+| enterprise_id | UUID | - | 是 | 系统生成，主键 |
+| enterprise_name | VARCHAR | 100 | 是 | 企业全称 |
+| industry_code | VARCHAR | 10 | 是 | 参照 GB/T 4754 行业代码 |
+| industry_name | VARCHAR | 50 | 是 | 行业中文名称 |
+| contact_person | VARCHAR | 30 | 否 | 联系人姓名 |
+| created_at | TIMESTAMP | - | 是 | 创建时间，系统自动填充 |
+| updated_at | TIMESTAMP | - | 是 | 更新时间，系统自动填充 |
+
+### 4.2 工艺路径描述（用户输入）
+
+| 字段 | 类型 | 长度限制 | 必填 | 说明 |
+|------|------|---------|------|------|
+| process_id | UUID | - | 是 | 主键 |
+| enterprise_id | UUID | - | 是 | 外键关联企业 |
+| industry_code | VARCHAR | 10 | 是 | 所属行业 |
+| process_description | TEXT | 最多 3000 字 | 是 | 企业工艺路径文字描述 |
+| energy_types | VARCHAR[] | 每项 30 字 | 否 | 主要能源品种，多选 |
+| current_measures | TEXT | 最多 1000 字 | 否 | 已采用的节能减排措施 |
+| reduction_target | VARCHAR | 100 | 否 | 减排目标，如"2030年减排30%" |
+| created_at | TIMESTAMP | - | 是 | 系统自动填充 |
+
+### 4.3 减排技术库
+
+| 字段 | 类型 | 长度限制 | 必填 | 说明 |
+|------|------|---------|------|------|
+| tech_id | UUID | - | 是 | 主键 |
+| tech_name | VARCHAR | 100 | 是 | 技术名称 |
+| industry_code | VARCHAR[] | 每项 10 字 | 是 | 适用行业代码，多值存储（或使用 tech_industry_mapping 关联表） |
+| applicable_process | VARCHAR | 200 | 是 | 适用生产环节 |
+| reduction_potential | VARCHAR | 100 | 否 | 节能/减排潜力描述或数值 |
+| maturity_level | ENUM | - | 是 | 枚举值：commercial / pilot / rd |
+| investment_cost | VARCHAR | 100 | 否 | 投资成本区间（如有经济分析） |
+| payback_period | VARCHAR | 50 | 否 | 投资回收周期（如有） |
+| source_type | ENUM | - | 是 | 枚举值：government / association / paper / enterprise / wechat / media |
+| source_name | VARCHAR | 200 | 是 | 来源名称（文件名/报告名/文章名） |
+| source_url | TEXT | - | 否 | 来源链接（公开可访问） |
+| source_year | SMALLINT | - | 否 | 来源发布年份 |
+| created_at | TIMESTAMP | - | 是 | 录入时间 |
+| updated_at | TIMESTAMP | - | 是 | 更新时间 |
+
+### 4.4 减排路径规划结果
+
+| 字段 | 类型 | 长度限制 | 必填 | 说明 |
+|------|------|---------|------|------|
+| plan_id | UUID | - | 是 | 主键 |
+| process_id | UUID | - | 是 | 外键关联工艺路径 |
+| enterprise_id | UUID | - | 是 | 外键关联企业 |
+| short_term_plan | JSONB | - | 是 | 短期措施（1-3年） |
+| mid_term_plan | JSONB | - | 是 | 中期措施（3-5年） |
+| long_term_plan | JSONB | - | 是 | 长期措施（5年以上） |
+| ai_model_version | VARCHAR | 50 | 是 | 生成所用 AI 模型版本 |
+| generated_at | TIMESTAMP | - | 是 | 生成时间 |
+
+---
+
+## 五、数据库设计规范
+
+### 5.1 命名规范
+
+- **表名**：小写 + 下划线，复数形式，如 `carbon_technologies`、`reduction_plans`
+- **字段名**：小写 + 下划线，如 `tech_name`、`maturity_level`
+- **索引名**：`idx_{表名}_{字段名}`，如 `idx_carbon_technologies_industry_code`
+- **外键名**：`fk_{表名}_{关联表名}`
+- **枚举类型**：大写 + 下划线，如 `MATURITY_LEVEL`
+
+### 5.2 必须建立索引的字段
+
+```sql
+-- 技术库高频查询字段（若 industry_code 为 VARCHAR[]，使用 GIN 索引）
+CREATE INDEX idx_carbon_technologies_industry_code ON carbon_technologies USING gin(industry_code);
+CREATE INDEX idx_carbon_technologies_maturity_level ON carbon_technologies(maturity_level);
+CREATE INDEX idx_carbon_technologies_source_type ON carbon_technologies(source_type);
+
+-- 全文检索（技术名称 + 适用环节）
+-- 'simple' 为无扩展时的兜底配置；安装 zhparser 后改用 to_tsvector('zhparser', ...) 获得更好中文分词
+CREATE INDEX idx_carbon_technologies_fulltext
+  ON carbon_technologies USING gin(to_tsvector('simple', tech_name || ' ' || COALESCE(applicable_process, '')));
+
+-- 路径规划查询
+CREATE INDEX idx_reduction_plans_enterprise_id ON reduction_plans(enterprise_id);
+CREATE INDEX idx_process_descriptions_enterprise_id ON process_descriptions(enterprise_id);
+```
+
+### 5.3 数据完整性规则
+
+- 所有表必须有 `created_at` 和 `updated_at` 字段，由触发器自动维护
+- 软删除优先：重要业务数据（技术库、规划结果）不物理删除，加 `deleted_at` 字段
+- `maturity_level` 枚举值仅允许：`commercial`（成熟商用）、`pilot`（示范推广）、`rd`（研发阶段）
+- `source_type` 枚举值仅允许：`government`、`association`、`paper`、`enterprise`、`wechat`、`media`
+- `industry_code` 必须与行业主表关联，禁止随意写入未登记的行业代码
+
+### 5.4 JSONB 字段结构规范（减排路径 plan）
+
+```json
+{
+  "measures": [
+    {
+      "tech_id": "uuid",
+      "tech_name": "蓄热式加热炉改造",
+      "applicable_process": "轧钢加热环节",
+      "priority": 1,
+      "estimated_reduction": "减少燃气消耗约20%",
+      "investment_level": "中",
+      "implementation_period": "12个月",
+      "notes": "需停产改造，建议结合大修窗口期实施"
+    }
+  ],
+  "total_estimated_reduction": "约15%-20%碳排放",
+  "generated_by": "claude-sonnet-4-20250514"
+}
+```
+
+### 5.5 技术细节补充
+
+- **industry_code 多值存储**：减排技术库中，若一项技术适用多个行业，采用以下二选一方案：
+  - 方案 A：使用 `VARCHAR[]` 数组类型，每项存行业代码（如 `['C32','C33']`），配合 GIN 索引支持 `@>` 包含查询
+  - 方案 B：建立 `tech_industry_mapping(tech_id, industry_code)` 关联表，多对多关系，便于扩展与统计
+- **GB/T 4754 行业代码主表**：建立 `industries(code, name, level)` 表维护行业代码，数据来源为国家统计局最新版 GB/T 4754，定期同步更新
+
+---
+
+## 六、API 接口规范
+
+- **风格**：RESTful，路径全小写 + 连字符，如 `/api/carbon-technologies`
+- **版本**：路径前缀 `/api/v1/`
+- **响应格式**：统一结构
+  ```json
+  {
+    "code": 0,
+    "message": "success",
+    "data": {},
+    "timestamp": 1700000000000
+  }
+  ```
+- **分页**：统一使用 `page`（页码，从1开始）+ `page_size`（每页条数，默认20，最大100）
+- **错误码**：业务错误码 4 位数，如 `4001`（参数缺失）、`4002`（行业代码不合法）、`5001`（AI 服务超时）
+
+---
+
+## 七、AI 集成规范
+
+- **模型**：统一使用 `claude-sonnet-4-20250514`
+- **超时**：AI 接口调用超时设置为 **60 秒**，路径规划生成可延长至 **120 秒**
+- **流式输出**：减排路径规划结果必须使用 **Streaming** 方式返回，避免长时间白屏
+- **记录**：每次 AI 调用结果必须记录 `ai_model_version` 和 `generated_at`，便于溯源
+- **降级**：AI 服务不可用时，返回友好提示"AI 服务暂时繁忙，请稍后重试"，禁止暴露原始错误
+
+---
+
+## 八、代码质量规范
+
+- 所有前端组件必须有 TypeScript 类型定义，禁止使用 `any`
+- 行业代码、技术成熟度等枚举值必须定义为常量文件，禁止魔法字符串散落在代码中
+- 敏感配置（API Key、数据库连接串）必须通过环境变量注入，禁止硬编码
+- 组件拆分：单文件不超过 300 行，超出须拆分子组件
+- 注释语言：中文注释为主（面向中文团队），代码变量名使用英文
