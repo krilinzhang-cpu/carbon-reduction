@@ -8,11 +8,12 @@ import {
   Select,
   Button,
   ConfigProvider,
-  Empty,
   message,
 } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import { INDUSTRIES } from "@/lib/constants";
+import { generateReport } from "@/lib/report-utils";
+import ReductionReport from "@/components/ReductionReport";
 
 const { TextArea } = Input;
 
@@ -29,17 +30,24 @@ const theme = {
 export default function PlansPage() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [report, setReport] = useState<ReturnType<typeof generateReport> | null>(null);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-      // 预留 AI 路径规划接口调用
-      await new Promise((r) => setTimeout(r, 800));
-      message.success("工艺路径已提交，减排路径规划功能即将上线");
-      setSubmitted(true);
-      form.resetFields();
+      const r = generateReport({
+        industry_code: values.industry_code,
+        process_description: values.process_description,
+        energy_types: values.energy_types,
+        energy_baseline_usage: values.energy_baseline_usage ?? "",
+        baseline_emissions: values.baseline_emissions ?? "",
+        current_measures: values.current_measures,
+        reduction_target: values.reduction_target,
+      });
+      setReport(r);
+      message.success("减排路径规划报告已生成");
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     } catch {
       // 校验失败
     } finally {
@@ -67,7 +75,7 @@ export default function PlansPage() {
           }}
         >
           <p className="text-text-secondary mb-6" style={{ fontSize: 14 }}>
-            根据企业工艺路径描述，AI 将为您生成个性化的短中长期减排路径规划建议。
+            填写基准年数据与工艺路径，系统将结合行业先进减排技术生成个性化减排报告。
           </p>
 
           <Form
@@ -100,11 +108,33 @@ export default function PlansPage() {
               ]}
             >
               <TextArea
-                rows={6}
-                placeholder="请描述企业主要生产工艺流程、能源消耗结构、关键排放环节等（如：炼钢-轧钢-热处理，主要能源为煤气和电力...）"
+                rows={4}
+                placeholder="请描述企业主要生产工艺流程、能源消耗结构、关键排放环节等"
                 maxLength={3000}
                 showCount
               />
+            </Form.Item>
+
+            <Form.Item
+              label="能源基准年用量"
+              name="energy_baseline_usage"
+              rules={[{ required: true, message: "请填写能源基准年用量" }]}
+              help="如：电力 5000万kWh，煤气 2亿立方米"
+            >
+              <TextArea
+                rows={2}
+                placeholder="请按能源品种分别填写基准年消费量数据"
+                maxLength={500}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="基准年排放总量"
+              name="baseline_emissions"
+              rules={[{ required: true, message: "请填写基准年排放总量" }]}
+              help="单位：tCO2e（吨二氧化碳当量）"
+            >
+              <Input placeholder="如：50万吨CO2当量" maxLength={100} />
             </Form.Item>
 
             <Form.Item
@@ -155,31 +185,23 @@ export default function PlansPage() {
                 icon={<SendOutlined />}
                 size="large"
               >
-                生成减排路径规划
+                生成减排路径规划报告
               </Button>
             </Form.Item>
           </Form>
         </Card>
 
-        {/* 规划结果占位 - 后续接入 AI 流式输出 */}
-        {submitted && (
+        {report && (
           <Card
             className="mt-6"
-            styles={{ body: { padding: 48 } }}
+            styles={{ body: { padding: 24 } }}
             style={{
               background: "var(--color-surface)",
               borderRadius: "var(--radius-md)",
               boxShadow: "var(--shadow-card)",
             }}
           >
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={
-                <span className="text-text-secondary">
-                  AI 减排路径规划结果将在此展示，支持短期（1-3年）、中期（3-5年）、长期（5年以上）分阶段展示
-                </span>
-              }
-            />
+            <ReductionReport report={report} />
           </Card>
         )}
       </div>
