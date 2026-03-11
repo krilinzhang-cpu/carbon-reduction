@@ -31,9 +31,9 @@ export default function ReductionReport({ report }: Props) {
         <p><strong>基准年排放总量：</strong>${report.input.baseline_emissions || "—"}</p>
         ${report.input.reduction_target ? `<p><strong>减排目标：</strong>${report.input.reduction_target}</p>` : ""}
       </div>
-      <div class="section"><h2>二、短期措施（1-3年）</h2>${m(report.short_term, "成熟商用")}</div>
-      <div class="section"><h2>三、中期措施（3-5年）</h2>${m(report.mid_term, "示范推广")}</div>
-      <div class="section"><h2>四、长期措施（5年以上）</h2>${m(report.long_term, "研发阶段")}</div>
+      <div class="section"><h2>二、短期措施（1-3年）</h2>${m(report.short_term)}</div>
+      <div class="section"><h2>三、中期措施（3-5年）</h2>${m(report.mid_term)}</div>
+      <div class="section"><h2>四、长期措施（5年以上）</h2>${m(report.long_term)}</div>
       <p class="footer">报告生成时间：${report.generated_at}</p>
     `;
   };
